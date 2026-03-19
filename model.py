@@ -57,3 +57,24 @@ class Word2VecSGNS:
 
         for i, neg_idx in enumerate(negative_indices):
             self.W_context[neg_idx] -= self.learning_rate * grad_negatives[i]
+
+    def get_vector(self, word_idx):
+
+        return self.W_target[word_idx]
+
+    def most_similar(self, word_idx, top_k=3):
+
+        target_vec = self.get_vector(word_idx)
+
+        dot_products = np.dot(self.W_target, target_vec)
+
+        norms = np.linalg.norm(self.W_target, axis=1) * np.linalg.norm(target_vec)
+
+        cos_sims = dot_products / (norms + 1e-10)
+
+        sorted_indices = np.argsort(cos_sims)[::-1]
+
+        similar_indices = [i for i in sorted_indices if i != word_idx][:top_k]
+        similarities = [cos_sims[i] for i in similar_indices]
+
+        return similar_indices, similarities

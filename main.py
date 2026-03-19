@@ -59,3 +59,20 @@ if __name__ == "__main__":
         learning_rate=0.05,
         num_neg_samples=5
     )
+
+    print("\n=== Testare Model (Inference) ===")
+
+    test_words = ["learning", "vector", "meaning"]
+
+    for word in test_words:
+        if word in dataset.word2idx:
+            word_idx = dataset.word2idx[word]
+            print(f"\nCele mai similare cuvinte pentru '{word}':")
+
+            similar_indices, similarities = trained_model.most_similar(word_idx, top_k=3)
+
+            for sim_idx, sim_score in zip(similar_indices, similarities):
+                sim_word = dataset.idx2word[sim_idx]
+                print(f" -> {sim_word} (Scor Cosinus: {sim_score:.4f})")
+        else:
+            print(f"Cuvântul '{word}' nu este în vocabular.")
