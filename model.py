@@ -20,8 +20,40 @@ class Word2VecSGNS:
 
     def forward_backward(self, target_idx, context_idx, negative_indices):
 
-        pass
+        v_target = self.W_target[target_idx]
+        v_context = self.W_context[context_idx]
+        v_negatives = self.W_context[negative_indices]
 
-    def update_weights(self, grad_target, grad_context, grad_negatives, target_idx, context_idx, negative_indices):
+        score_pos = np.dot(v_target, v_context)
+        pred_pos = self.sigmoid(score_pos)
 
-        pass
+        scores_neg = np.dot(v_negatives, v_target)
+        preds_neg = self.sigmoid(scores_neg)
+
+        loss_pos = -np.log(pred_pos + 1e-10)
+        loss_neg = -np.sum(np.log(1 - preds_neg + 1e-10))
+        total_loss = loss_pos + loss_neg
+
+        error_pos = pred_pos - 1.0
+
+        errors_neg = preds_neg
+
+        grad_target = np.zeros(self.embedding_dim)
+
+        grad_target += error_pos * v_context
+        grad_context = error_pos * v_target
+
+        grad_target += np.dot(errors_neg, v_negatives)
+
+        grad_negatives = np.outer(errors_neg, v_target)
+
+        return total_loss, grad_target, grad_context, grad_negatives
+
+    def update_weights(self, target_idx, context_idx, negative_indices,
+                       grad_target, grad_context, grad_negatives):
+
+        self.W_target[target_idx] -= self.learning_rate * grad_target
+        self.W_context[context_idx] -= self.learning_rate * grad_context
+
+        for i, neg_idx in enumerate(negative_indices):
+            self.W_context[neg_idx] -= self.learning_rate * grad_negatives[i]
